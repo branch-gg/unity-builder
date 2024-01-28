@@ -1,7 +1,6 @@
 import ImageEnvironmentFactory from './image-environment-factory';
 import { existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
-import * as core from '@actions/core';
 import { ExecOptions, exec } from '@actions/exec';
 import { DockerParameters, StringKeyValuePair } from './shared-types';
 
@@ -58,8 +57,6 @@ class Docker {
     if (!existsSync(githubWorkflow)) mkdirSync(githubWorkflow);
     const commandPrefix = image === `alpine` ? `/bin/sh` : `/bin/bash`;
 
-    core.info(`Using native linux paths`);
-
     return `docker run \
             --workdir ${dockerWorkspacePath} \
             --rm \
@@ -102,32 +99,26 @@ class Docker {
       dockerIsolationMode,
     } = parameters;
 
-    const dockerCompatibleWorkspacePath = dockerWorkspacePath.replace(/^([A-Za-z]):/, '/$1').replace(/\\/g, '/');
-    const dockerCompatibleActionFolderPath = actionFolder.replace(/^([A-Za-z]):/, '/$1').replace(/\\/g, '/');
-
-    core.info(`Using docker compatible workspace path: ${dockerCompatibleWorkspacePath}`);
-    core.info(`Using docker compatible actions folder path: ${dockerCompatibleActionFolderPath}`);
-
     return `docker run \
             --workdir //c/${dockerWorkspacePath} \
             --rm \
             ${ImageEnvironmentFactory.getEnvVarString(parameters)} \
-            --env GITHUB_WORKSPACE=${dockerCompatibleWorkspacePath} \
+            --env GITHUB_WORKSPACE=c:${dockerWorkspacePath} \
             ${gitPrivateToken ? `--env GIT_PRIVATE_TOKEN="${gitPrivateToken}"` : ''} \
-            --volume "${workspace}:${dockerCompatibleWorkspacePath}" \
-            --volume "C:/regkeys:/regkeys" \
-            --volume "C:/Program Files/Microsoft Visual Studio:/Program Files/Microsoft Visual Studio" \
-            --volume "C:/Program Files (x86)/Microsoft Visual Studio:/Program Files (x86)/Microsoft Visual Studio" \
-            --volume "C:/Program Files (x86)/Windows Kits:/Program Files (x86)/Windows Kits" \
-            --volume "C:/ProgramData/Microsoft/VisualStudio:/ProgramData/Microsoft/VisualStudio" \
-            --volume "${dockerCompatibleActionFolderPath}/default-build-script:/UnityBuilderAction" \
-            --volume "${dockerCompatibleActionFolderPath}/platforms/windows:/steps" \
-            --volume "${dockerCompatibleActionFolderPath}/BlankProject:/BlankProject" \
+            --volume "${workspace}":"c:${dockerWorkspacePath}" \
+            --volume "c:/regkeys":"c:/regkeys" \
+            --volume "C:/Program Files/Microsoft Visual Studio":"C:/Program Files/Microsoft Visual Studio" \
+            --volume "C:/Program Files (x86)/Microsoft Visual Studio":"C:/Program Files (x86)/Microsoft Visual Studio" \
+            --volume "C:/Program Files (x86)/Windows Kits":"C:/Program Files (x86)/Windows Kits" \
+            --volume "C:/ProgramData/Microsoft/VisualStudio":"C:/ProgramData/Microsoft/VisualStudio" \
+            --volume "${actionFolder}/default-build-script":"c:/UnityBuilderAction" \
+            --volume "${actionFolder}/platforms/windows":"c:/steps" \
+            --volume "${actionFolder}/BlankProject":"c:/BlankProject" \
             --cpus=${dockerCpuLimit} \
             --memory=${dockerMemoryLimit} \
             --isolation=${dockerIsolationMode} \
             ${image} \
-            powershell /steps/entrypoint.ps1`;
+            powershell c:/steps/entrypoint.ps1`;
   }
 }
 
