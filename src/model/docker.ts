@@ -100,7 +100,7 @@ class Docker {
     } = parameters;
 
     return `docker run \
-            --workdir c:${dockerWorkspacePath} \
+            --workdir //c/${dockerWorkspacePath} \
             --rm \
             ${ImageEnvironmentFactory.getEnvVarString(parameters)} \
             --env GITHUB_WORKSPACE=c:${dockerWorkspacePath} \
