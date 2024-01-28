@@ -1,6 +1,7 @@
 import ImageEnvironmentFactory from './image-environment-factory';
 import { existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
+import * as core from '@actions/core';
 import { ExecOptions, exec } from '@actions/exec';
 import { DockerParameters, StringKeyValuePair } from './shared-types';
 
@@ -57,6 +58,8 @@ class Docker {
     if (!existsSync(githubWorkflow)) mkdirSync(githubWorkflow);
     const commandPrefix = image === `alpine` ? `/bin/sh` : `/bin/bash`;
 
+    core.info(`Using native linux paths`);
+
     return `docker run \
             --workdir ${dockerWorkspacePath} \
             --rm \
@@ -101,6 +104,9 @@ class Docker {
 
     const dockerCompatibleWorkspacePath = dockerWorkspacePath.replace(/^([A-Za-z]):/, '/$1').replace(/\\/g, '/');
     const dockerCompatibleActionFolderPath = actionFolder.replace(/^([A-Za-z]):/, '/$1').replace(/\\/g, '/');
+
+    core.info(`Using docker compatible workspace path: ${dockerCompatibleWorkspacePath}`);
+    core.info(`Using docker compatible actions folder path: ${dockerCompatibleActionFolderPath}`);
 
     return `docker run \
             --workdir //c/${dockerWorkspacePath} \
