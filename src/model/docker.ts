@@ -99,27 +99,30 @@ class Docker {
       dockerIsolationMode,
     } = parameters;
 
+    const dockerCompatibleWorkspacePath = dockerWorkspacePath.replace(/^([A-Za-z]):/, '/$1').replace(/\\/g, '/');
+    const dockerCompatibleActionFolderPath = actionFolder.replace(/^([A-Za-z]):/, '/$1').replace(/\\/g, '/');
+  
     return `docker run \
-            --workdir c:${dockerWorkspacePath} \
+            --workdir ${dockerCompatibleWorkspacePath} \
             --rm \
             ${ImageEnvironmentFactory.getEnvVarString(parameters)} \
-            --env GITHUB_WORKSPACE=c:${dockerWorkspacePath} \
+            --env GITHUB_WORKSPACE=${dockerCompatibleWorkspacePath} \
             ${gitPrivateToken ? `--env GIT_PRIVATE_TOKEN="${gitPrivateToken}"` : ''} \
-            --volume "${workspace}":"c:${dockerWorkspacePath}" \
-            --volume "c:/regkeys":"c:/regkeys" \
-            --volume "C:/Program Files/Microsoft Visual Studio":"C:/Program Files/Microsoft Visual Studio" \
-            --volume "C:/Program Files (x86)/Microsoft Visual Studio":"C:/Program Files (x86)/Microsoft Visual Studio" \
-            --volume "C:/Program Files (x86)/Windows Kits":"C:/Program Files (x86)/Windows Kits" \
-            --volume "C:/ProgramData/Microsoft/VisualStudio":"C:/ProgramData/Microsoft/VisualStudio" \
-            --volume "${actionFolder}/default-build-script":"c:/UnityBuilderAction" \
-            --volume "${actionFolder}/platforms/windows":"c:/steps" \
-            --volume "${actionFolder}/BlankProject":"c:/BlankProject" \
+            --volume "${workspace}:${dockerCompatibleWorkspacePath}" \
+            --volume "C:/regkeys:/regkeys" \
+            --volume "C:/Program Files/Microsoft Visual Studio:/Program Files/Microsoft Visual Studio" \
+            --volume "C:/Program Files (x86)/Microsoft Visual Studio:/Program Files (x86)/Microsoft Visual Studio" \
+            --volume "C:/Program Files (x86)/Windows Kits:/Program Files (x86)/Windows Kits" \
+            --volume "C:/ProgramData/Microsoft/VisualStudio:/ProgramData/Microsoft/VisualStudio" \
+            --volume "${dockerCompatibleActionFolderPath}/default-build-script:/UnityBuilderAction" \
+            --volume "${dockerCompatibleActionFolderPath}/platforms/windows:/steps" \
+            --volume "${dockerCompatibleActionFolderPath}/BlankProject:/BlankProject" \
             --cpus=${dockerCpuLimit} \
             --memory=${dockerMemoryLimit} \
             --isolation=${dockerIsolationMode} \
             ${image} \
-            powershell c:/steps/entrypoint.ps1`;
-  }
+            powershell /steps/entrypoint.ps1`;
+  }  
 }
 
 export default Docker;
